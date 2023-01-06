@@ -176,7 +176,8 @@ function drawDayBar(context, now) {
     }
 
     context.fillStyle = prevFillStyle;
-    context.fillRect(prevOffset, 40, 840 - prevOffset + 1, 100);
+    context.fillRect(prevOffset, 40, 840 - prevOffset + 1, 60);
+    context.fillRect(prevOffset, 80, 840 - prevOffset + 1, 100);
 
     const offset = 60 + 840 * (currentTimestamp - timestampSince) / (timestampUntil - timestampSince);
 
