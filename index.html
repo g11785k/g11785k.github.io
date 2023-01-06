@@ -6,23 +6,25 @@
         <meta http-equiv="Expires" content="0">
         <meta http-equiv="Refresh" content="30">
         <style>
-            * {
+            html, body {
                 padding: 0;
                 margin: 0;
+                display: grid;
+                grid-template-columns: auto 960px auto;
+                grid-template-rows: auto 1620px auto;
+            }
+            .container {
+                border: 1px solid red;
+                grid-column-start: 2;
+                grid-column-end: 2;
+                grid-row-start: 2;
+                grid-row-end: 2;
             }
         </style>
     </head>
     <body>
-        <div style="position:absolute; width:600px; height:800px; outline: 1px solid red;">
-            <h1 style="position:absolute; bottom:0;">800x600</h1>
-        </div>
+        <div class="container">
 
-        <div style="position:absolute; width:768px; height:1024px; outline: 1px solid green;">
-            <h1 style="position:absolute; bottom:0;">1024x768</h1>
-        </div>
-
-        <div style="position:absolute; width:970px; height:1620px; outline: 1px solid blue;">
-            <h1 style="position:absolute; bottom:0;">1620x970</h1>
         </div>
     </body>
 </html>
