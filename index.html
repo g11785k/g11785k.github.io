@@ -91,16 +91,16 @@ const schedule = [
 
 function getActivity(timestamp) {
     var activityName = 'default';
-    timestamp = (timestamp.toFixed(0) + 1440) % 1440
-    timestamp = 100 * Math.floor(timestamp / 60).toFixed(0) + timestamp % 60;
+    timestamp = (Math.floor(timestamp) + 1440) % 1440;
+    const hhmm = 100 * Math.floor(timestamp / 60) + timestamp % 60;
 
     for (var i = 0; i < schedule.length; i++) {
-        if ((timestamp >= schedule[i][0]) && (timestamp <= schedule[i][1])) {
+        if ((hhmm >= schedule[i][0]) && (hhmm <= schedule[i][1])) {
             activityName = schedule[i][2];
         }
     }
 
-    console.log(timestamp, activityName);
+    console.log(timestamp, hhmm, activityName);
 
     return activities[activityName];
 }
@@ -156,7 +156,7 @@ function drawDayBar(context, now) {
     var prevFillStyle = null;
 
     for (var timestamp = timestampSince; timestamp < timestampUntil; timestamp++) {
-        const fillStyle = getActivity((timestamp + 1440)%1440)[1];
+        const fillStyle = getActivity(timestamp)[1];
         const offset = 60 + 840 * (timestamp - timestampSince) / (timestampUntil - timestampSince);
 
         if (prevFillStyle != fillStyle) {
@@ -176,13 +176,13 @@ function drawDayBar(context, now) {
     }
 
     context.fillStyle = prevFillStyle;
-    context.fillRect(prevOffset, 40, 840 - prevOffset + 1, 60);
-    context.fillRect(prevOffset, 80, 840 - prevOffset + 1, 100);
+    context.fillRect(prevOffset, 40, 900 - prevOffset + 1, 100);
 
     const offset = 60 + 840 * (currentTimestamp - timestampSince) / (timestampUntil - timestampSince);
 
     context.fillStyle = "#000000";
-    context.fillRect(offset - 1, 20, 3, 140);
+    context.fillRect(offset - 2, 30, 5, 50);
+    context.fillRect(offset - 2, 100, 5, 50);
 }
 
 function onTimer(forceRedraw) {
