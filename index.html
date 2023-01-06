@@ -4,7 +4,6 @@
         <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
         <meta http-equiv="Pragma" content="no-cache">
         <meta http-equiv="Expires" content="0">
-        <meta http-equiv="Refresh" content="30">
         <meta name="viewport" content="width=device-width, height=device-height">
         <style>
             * {
@@ -16,28 +15,129 @@
                 padding: 1px;
                 margin: 0;
             }
-            .outer {
+            #outer {
                 display: grid;
                 grid-template-columns: auto 960px auto;
-                grid-template-rows: auto 1640px auto;
-                border: 1px solid red;
+                grid-template-rows: auto 1680px auto;
                 width: 100%;
                 height: 100%;
             }
-            .inner {
-                outline: 1px solid blue;
+            #inner {
                 grid-column-start: 2;
                 grid-column-end: 3;
                 grid-row-start: 2;
                 grid-row-end: 3;
+                position: relative;
+
+            }
+            #clock-canvas {
+                position: absolute;
+                top: 360px;
+                width: 960px;
+                height: 960px;
+            }
+            #clock-text {
+                position: absolute;
+                top: 740px;
+                width: 960px;
+                height: 200px;
+                font-family: "Courier New", Courier, monospace;
+                font-size: 180px;
+                text-align: center;
+                color: #000000;
+                text-shadow: 4px 4px 16px #FFFFFF;
             }
         </style>
     </head>
-    <body>
-        <div class="outer">
-            <div class="inner">
-
+    <body id="root">
+        <div id="outer">
+            <div id="inner">
+                <canvas id="clock-canvas" width="960" height="960"></canvas>
+                <div id="clock-text"></div>
             </div>
         </div>
     </body>
+    <script>
+// https://flatuicolors.com/palette/es
+const activities = {
+    'default': ['#cc8e35', '#ffb142'],
+    'free':    ['#227093', '#34ace0'],
+    'study':   ['#218c74', '#33d9b2'],
+    'play':    ['#474787', '#706fd3'],
+    'video':   ['#b33939', '#ff5252'],
+}
+
+const schedule = [
+    [0800, 1200, 'free'],
+    [1200, 1400, 'study'],
+    [1400, 1600, 'play'],
+    [1600, 1800, 'video'],
+];
+
+
+function onTimer() {
+    const clockTextElement = document.getElementById("clock-text");
+    const now = new Date();
+
+    clockTextElement.innerText = `${now.getHours().toString().padStart(2, "0")}:${now.getMinutes().toString().padStart(2, "0")}:${now.getSeconds().toString().padStart(2, "0")}`;
+
+    const clockCanvasElement = document.getElementById("clock-canvas");
+    const context2d = clockCanvasElement.getContext("2d");
+    const w = 960;
+    const h = 960;
+    const cx = w / 2;
+    const cy = h / 2;
+
+    if (now.getSeconds() == 0) {
+        context2d.clearRect(0, 0, w, h);
+
+        context2d.strokeStyle = '#000000';
+
+        for (var i = 0; i < 60; i++) {
+            var r1 = 480;
+            var r2 = 0;
+
+            if (i % 5 == 0) {
+                r2 = 460;
+                context2d.lineWidth = 12;
+            } else {
+                r2 = 470;
+                context2d.lineWidth = 6;
+            }
+
+            const x1 = cx + r2 * Math.sin(i * Math.PI / 30);
+            const y1 = cy + r2 * Math.cos(i * Math.PI / 30);
+            const x2 = cx + r1 * Math.sin(i * Math.PI / 30);
+            const y2 = cy + r1 * Math.cos(i * Math.PI / 30);
+            context2d.beginPath();
+            context2d.moveTo(x1, y1);
+            context2d.lineTo(x2, y2);
+            context2d.stroke();
+        }
+    } else {
+        const timestamp = (100 * (now.getHours() - 10) + now.getMinutes());
+        var activityName = 'default';
+
+        for (var i = 0; i < schedule.length; i++) {
+            if ((timestamp >= schedule[i][0]) && (timestamp <= schedule[i][1])) {
+                activityName = schedule[i][2];
+            }
+        }
+
+        document.getElementById('root').style.backgroundColor = activities[activityName][1];
+
+        context2d.fillStyle = activities[activityName][0];
+        context2d.strokeStyle = '#00FF00';
+        context2d.lineWidth = 12;
+
+        context2d.beginPath();
+        context2d.moveTo(cx, cy);
+        context2d.arc(cx, cy, 460, 1.5 * Math.PI, (1.5 + now.getSeconds() / 30) * Math.PI);
+        context2d.lineTo(cx, cy);
+        context2d.fill();
+    }
+}
+
+setInterval(onTimer, 100);
+    </script>
 </html>
