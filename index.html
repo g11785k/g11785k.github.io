@@ -47,6 +47,12 @@
                 color: #000000;
                 text-shadow: 4px 4px 16px #FFFFFF;
             }
+            #day-canvas {
+                position: absolute;
+                top: 1500px;
+                width: 960px;
+                height: 180px;
+            }
         </style>
     </head>
     <body id="root">
@@ -54,90 +60,155 @@
             <div id="inner">
                 <canvas id="clock-canvas" width="960" height="960"></canvas>
                 <div id="clock-text"></div>
+                <canvas id="day-canvas" width="960" height="180"></canvas>
             </div>
         </div>
     </body>
     <script>
 // https://flatuicolors.com/palette/es
 const activities = {
-    'default': ['#cc8e35', '#ffb142'],
-    'free':    ['#227093', '#34ace0'],
-    'study':   ['#218c74', '#33d9b2'],
-    'play':    ['#474787', '#706fd3'],
-    'video':   ['#b33939', '#ff5252'],
+    'default': ['#84817a', '#d1ccc0'], // grey
+    'free':    ['#227093', '#34ace0'], // blue
+    'study':   ['#218c74', '#33d9b2'], // green
+    'play':    ['#474787', '#706fd3'], // violet
+    'video':   ['#b33939', '#ff5252'], // red
 }
 
 const schedule = [
-    [0800, 1200, 'free'],
-    [1200, 1400, 'study'],
-    [1400, 1600, 'play'],
-    [1600, 1800, 'video'],
+    [1200, 1245, 'free'], [1245, 1300, 'study'],
+    [1300, 1345, 'free'], [1345, 1400, 'study'],
+    [1400, 1445, 'free'], [1445, 1500, 'study'],
+    [1500, 1545, 'free'], [1545, 1600, 'study'],
+    [1600, 1645, 'free'], [1645, 1700, 'study'],
+    [1700, 1745, 'free'], [1745, 1800, 'study'],
+    [1800, 1845, 'free'], [1845, 1900, 'study'],
+    [1900, 1945, 'free'], [1945, 2000, 'study'],
+    [2000, 2045, 'free'], [2045, 2100, 'study'],
+    [2100, 2145, 'free'], [2145, 2200, 'study'],
+    [2200, 2245, 'free'], [2245, 2300, 'study'],
+    [2300, 2345, 'free'], [2345, 2400, 'study'],
 ];
 
+function getActivity(timestamp) {
+    var activityName = 'default';
+    timestamp = 100 * Math.floor(timestamp / 60) + timestamp % 60;
 
-function onTimer() {
+    for (var i = 0; i < schedule.length; i++) {
+        if ((timestamp >= schedule[i][0]) && (timestamp <= schedule[i][1])) {
+            activityName = schedule[i][2];
+        }
+    }
+
+    console.log(timestamp, activityName);
+
+    return activities[activityName];
+}
+
+function drawClockTicks(context) {
+    const cx = 480;
+    const cy = 480;
+
+    context.clearRect(0, 0, 960, 960);
+    context.strokeStyle = '#000000';
+
+    for (var i = 0; i < 60; i++) {
+        const r1 = 480;
+        const r2 = (i % 5 == 0) ? 460 : 470;
+        const x1 = cx + r2 * Math.sin(i * Math.PI / 30);
+        const y1 = cy + r2 * Math.cos(i * Math.PI / 30);
+        const x2 = cx + r1 * Math.sin(i * Math.PI / 30);
+        const y2 = cy + r1 * Math.cos(i * Math.PI / 30);
+
+        context.lineWidth = (i % 5 == 0) ? 12 : 6;
+        context.beginPath();
+        context.moveTo(x1, y1);
+        context.lineTo(x2, y2);
+        context.stroke();
+    }
+}
+
+function drawClockSector(context, fillStyle, now) {
+    const cx = 480;
+    const cy = 480;
+
+    context.fillStyle = fillStyle;
+    context.strokeStyle = '#00FF00';
+    context.lineWidth = 12;
+
+    context.beginPath();
+    context.moveTo(cx, cy);
+    context.arc(cx, cy, 460, 1.5 * Math.PI, (1.5 + now.getSeconds() / 30) * Math.PI);
+    context.lineTo(cx, cy);
+    context.fill();
+}
+
+function drawDayBar(context, now) {
+    context.clearRect(0, 0, 960, 180);
+
+    context.fillStyle = "#d1ccc0";
+    context.fillRect(0, 0, 960, 180);
+
+    const currentTimestamp = 60 * now.getHours() + now.getMinutes();
+    const timestampSince = currentTimestamp - 2 * 60;
+    const timestampUntil = currentTimestamp + 2 * 60;
+    var prevOffset = 0;
+    var prevFillStyle = null;
+
+    for (var timestamp = timestampSince; timestamp < timestampUntil; timestamp++) {
+        const fillStyle = getActivity((timestamp + 1440)%1440)[1];
+        const offset = 60 + 840 * (timestamp - timestampSince) / (timestampUntil - timestampSince);
+
+        if (prevFillStyle != fillStyle) {
+            if (prevFillStyle !== null) {
+                context.fillStyle = prevFillStyle;
+                context.fillRect(prevOffset, 40, offset - prevOffset + 1, 100);
+            }
+
+            prevFillStyle = fillStyle;
+            prevOffset = offset;
+        }
+
+        if (timestamp % 15 == 0) {
+            context.fillStyle = "#000000";
+            context.fillRect(offset - 1, 160, 3, 10);
+        }
+    }
+
+    context.fillStyle = prevFillStyle;
+    context.fillRect(prevOffset, 40, 840 - prevOffset + 1, 100);
+
+    const offset = 60 + 840 * (currentTimestamp - timestampSince) / (timestampUntil - timestampSince);
+
+    context.fillStyle = "#000000";
+    context.fillRect(offset - 1, 20, 3, 140);
+}
+
+function onTimer(forceRedraw) {
     const clockTextElement = document.getElementById("clock-text");
     const now = new Date();
 
     clockTextElement.innerText = `${now.getHours().toString().padStart(2, "0")}:${now.getMinutes().toString().padStart(2, "0")}:${now.getSeconds().toString().padStart(2, "0")}`;
 
     const clockCanvasElement = document.getElementById("clock-canvas");
-    const context2d = clockCanvasElement.getContext("2d");
-    const w = 960;
-    const h = 960;
-    const cx = w / 2;
-    const cy = h / 2;
+    const clockCanvasContext = clockCanvasElement.getContext("2d");
 
-    if (now.getSeconds() == 0) {
-        context2d.clearRect(0, 0, w, h);
+    const dayCanvasElement = document.getElementById("day-canvas");
+    const dayCanvasContext = dayCanvasElement.getContext("2d");
 
-        context2d.strokeStyle = '#000000';
-
-        for (var i = 0; i < 60; i++) {
-            var r1 = 480;
-            var r2 = 0;
-
-            if (i % 5 == 0) {
-                r2 = 460;
-                context2d.lineWidth = 12;
-            } else {
-                r2 = 470;
-                context2d.lineWidth = 6;
-            }
-
-            const x1 = cx + r2 * Math.sin(i * Math.PI / 30);
-            const y1 = cy + r2 * Math.cos(i * Math.PI / 30);
-            const x2 = cx + r1 * Math.sin(i * Math.PI / 30);
-            const y2 = cy + r1 * Math.cos(i * Math.PI / 30);
-            context2d.beginPath();
-            context2d.moveTo(x1, y1);
-            context2d.lineTo(x2, y2);
-            context2d.stroke();
-        }
+    if ((now.getSeconds() == 0) || forceRedraw) {
+        drawClockTicks(clockCanvasContext);
+        drawDayBar(dayCanvasContext, now);
     } else {
-        const timestamp = (100 * (now.getHours() - 10) + now.getMinutes());
-        var activityName = 'default';
+        const activity = getActivity(60 * now.getHours() + now.getMinutes());
 
-        for (var i = 0; i < schedule.length; i++) {
-            if ((timestamp >= schedule[i][0]) && (timestamp <= schedule[i][1])) {
-                activityName = schedule[i][2];
-            }
-        }
+        document.getElementById('root').style.backgroundColor = activity[1];
 
-        document.getElementById('root').style.backgroundColor = activities[activityName][1];
-
-        context2d.fillStyle = activities[activityName][0];
-        context2d.strokeStyle = '#00FF00';
-        context2d.lineWidth = 12;
-
-        context2d.beginPath();
-        context2d.moveTo(cx, cy);
-        context2d.arc(cx, cy, 460, 1.5 * Math.PI, (1.5 + now.getSeconds() / 30) * Math.PI);
-        context2d.lineTo(cx, cy);
-        context2d.fill();
+        drawClockSector(clockCanvasContext, activity[0], now);
     }
 }
 
-setInterval(onTimer, 100);
+setInterval(onTimer, 100, false);
+
+onTimer(true);
     </script>
 </html>
