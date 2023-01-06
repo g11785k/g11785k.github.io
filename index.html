@@ -7,17 +7,25 @@
         <meta http-equiv="Refresh" content="30">
         <meta name="viewport" content="width=device-width, height=device-height">
         <style>
+            * {
+                box-sizing: border-box;
+            }
             html, body {
                 width: 100%;
                 height: 100%;
-                padding: 0;
+                padding: 1px;
                 margin: 0;
+            }
+            .outer {
                 display: grid;
                 grid-template-columns: auto 960px auto;
-                grid-template-rows: auto 1620px auto;
-            }
-            .container {
+                grid-template-rows: auto 620px auto;
                 border: 1px solid red;
+                width: 100%;
+                height: 100%;
+            }
+            .inner {
+                outline: 1px solid blue;
                 grid-column-start: 2;
                 grid-column-end: 3;
                 grid-row-start: 2;
@@ -26,7 +34,10 @@
         </style>
     </head>
     <body>
-        <div class="container">
+        <div class="outer">
+            <div class="inner">
+
+            </div>
 
         </div>
     </body>
